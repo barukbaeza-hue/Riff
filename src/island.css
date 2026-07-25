@@ -1,0 +1,321 @@
+/* Isla dinámica de Riff, con la gramática visual de la Dynamic Island de iOS:
+   negro puro, esquinas muy redondeadas y, al aparecer texto, un segundo bloque que emerge
+   del primero como una gota de líquido.
+
+   El efecto de fluido se hace con dos capas superpuestas de idéntica geometría:
+     .blobs   → solo siluetas negras, con el filtro #goo aplicado
+     .content → el texto y los iconos, nítidos, sin filtro
+   Si el filtro se aplicara a todo, el texto saldría desenfocado y deformado.
+
+   Regla de oro en este equipo: nada se anima en reposo. Todo movimiento nace de un evento
+   del backend, y las transiciones las resuelve el compositor, no el CPU. */
+
+:root {
+  --surface: #000000;
+  --title: #ffffff;
+  --muted: rgba(255, 255, 255, 0.52);
+  --accent: #ffffff;
+  --danger: #ff6b6b;
+  --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+
+  --pill-w: 296px;
+  --pill-h: 52px;
+  --bubble-w: 286px;
+  /* Altura real del texto, calculada en island.js. Ambas capas la leen para que la
+     silueta negra y el contenido crezcan exactamente igual. */
+  --bubble-h: 0px;
+  /* Separación entre los dos bloques ya despegados.
+     El filtro engorda las siluetas unos 2-3 px por lado, así que el hueco que se ve es
+     bastante menor que este valor: 14 px de CSS quedan en unos 4 px de aire real.
+     Durante la apertura siguen fundiéndose, que es donde se aprecia el fluido. */
+  --gap: 14px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  /* El overlay no debe capturar clics: pertenecen a la app que hay debajo. */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* La píldora queda anclada abajo y el bloque de texto crece hacia arriba. */
+body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+}
+
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.wrap {
+  position: relative;
+  width: var(--pill-w);
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  transition: opacity 0.2s ease, transform 0.36s var(--spring);
+}
+
+/* Cualquier estado distinto de idle hace entrar la isla. */
+.wrap:not([data-state="idle"]) {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.layer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* La capa de contenido se superpone exactamente sobre la de siluetas. */
+.content {
+  position: absolute;
+  inset: 0;
+}
+
+.blobs {
+  filter: url(#goo);
+}
+
+/* ---------------------------------------------------------------- siluetas */
+
+.pill-shape {
+  width: var(--pill-w);
+  height: var(--pill-h);
+  /* Algo menos de radio del real: el filtro redondea de más. */
+  border-radius: 22px;
+  background: var(--surface);
+  flex: 0 0 auto;
+}
+
+.bubble-shape {
+  width: var(--bubble-w);
+  height: 0;
+  border-radius: 20px;
+  background: var(--surface);
+  flex: 0 0 auto;
+  /* Cerrado, vive dentro de la píldora: al abrirse parece que emerge de ella. */
+  margin-bottom: -26px;
+  transform: scaleX(0.55);
+  transition: height 0.42s var(--spring), margin-bottom 0.42s var(--spring),
+    transform 0.42s var(--spring);
+}
+
+.wrap[data-text="filled"] .bubble-shape {
+  height: var(--bubble-h);
+  margin-bottom: var(--gap);
+  transform: scaleX(1);
+}
+
+/* ---------------------------------------------------------------- contenido */
+
+.bubble-box {
+  width: var(--bubble-w);
+  height: 0;
+  margin-bottom: -26px;
+  padding: 0 18px;
+  overflow: hidden;
+  opacity: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  transition: height 0.42s var(--spring), margin-bottom 0.42s var(--spring),
+    opacity 0.22s ease, padding 0.42s var(--spring);
+}
+
+.wrap[data-text="filled"] .bubble-box {
+  height: var(--bubble-h);
+  margin-bottom: var(--gap);
+  padding: 14px 18px;
+  /* El texto entra cuando la burbuja ya casi ha terminado de abrirse. */
+  opacity: 1;
+  transition-delay: 0s, 0s, 0.16s, 0s;
+}
+
+/* Sin recorte: el texto crece cuanto haga falta y la burbuja crece con él.
+   Solo cuando llega a ser larguísimo aparece un desplazamiento interno que mantiene
+   visible el final, como un teleprompter. */
+.preview {
+  width: 100%;
+  max-height: 420px;
+  overflow-y: auto;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  scrollbar-width: none;
+}
+
+.preview::-webkit-scrollbar {
+  display: none;
+}
+
+.pill-box {
+  width: var(--pill-w);
+  height: var(--pill-h);
+  padding: 0 14px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------------- micrófono */
+
+.art {
+  position: relative;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  transition: color 0.25s ease;
+}
+
+.art svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 20px;
+  height: 20px;
+  transition: opacity 0.2s ease, transform 0.36s var(--spring);
+}
+
+.art .check,
+.art .pause {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+/* En pausa: el micrófono cede su sitio al símbolo de pausa, en ámbar para que se
+   distinga de un vistazo del estado de escucha. */
+[data-state="paused"] .art {
+  color: #ffc46b;
+}
+
+[data-state="paused"] .art .mic {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+[data-state="paused"] .art .pause {
+  opacity: 1;
+  transform: scale(0.78);
+}
+
+[data-state="done"] .art {
+  color: #5addb0;
+}
+
+[data-state="done"] .art .mic {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+[data-state="done"] .art .check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+[data-state="error"] .art {
+  color: var(--danger);
+}
+
+/* Latido sutil mientras se escucha. Se detiene solo al cambiar de estado, porque la
+   animación está atada al selector. */
+[data-state="listening"] .art .mic {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- textos */
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-state="error"] .title {
+  color: var(--danger);
+}
+
+/* ---------------------------------------------------------------- visualizador */
+
+.bars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+[data-state="listening"] .bars {
+  opacity: 1;
+}
+
+[data-state="transcribing"] .bars {
+  opacity: 0.32;
+}
+
+.bar {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform: scaleY(0.08);
+  /* Ligeramente más larga que el intervalo de eventos (40 ms): así el movimiento se
+     interpola en el compositor y las barras respiran en vez de saltar. */
+  transition: transform 0.07s linear;
+  will-change: transform;
+}
+
+/* ---------------------------------------------------------------- contador */
+
+.timer {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+[data-state="listening"] .timer,
+[data-state="paused"] .timer {
+  opacity: 1;
+}

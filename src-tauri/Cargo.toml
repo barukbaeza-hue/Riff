@@ -1,0 +1,50 @@
+[package]
+name = "riff"
+version = "0.1.0"
+description = "Dictado por voz global para Windows"
+authors = ["Baruk"]
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Audio: captura del micrófono y escritura de WAV
+cpal = "0.15"
+hound = "3"
+
+# HTTP hacia Groq. rustls-tls evita depender de OpenSSL en Windows.
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "multipart",
+    "rustls-tls",
+] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+
+# Portapapeles y envío de Ctrl+V
+arboard = "3"
+enigo = "0.2"
+
+[profile.dev]
+# Compilar las dependencias optimizadas hace el dev mucho más ágil en un CPU lento,
+# y solo se paga una vez.
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+opt-level = "s"
+# "thin" en lugar de LTO completo: el binario queda apenas un 5% mayor, pero la
+# compilación baja de ~45 min a ~15 en un portátil de dos núcleos.
+lto = "thin"
+codegen-units = 4
+strip = true

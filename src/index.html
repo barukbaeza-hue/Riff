@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Riff</title>
+    <link rel="stylesheet" href="island.css" />
+  </head>
+  <body>
+    <!-- Filtro de fluido: desenfoca y luego sube brutalmente el contraste del alfa, así
+         dos formas cercanas se funden por un cuello líquido en vez de tocarse sin más. -->
+    <svg class="defs" aria-hidden="true">
+      <defs>
+        <filter id="goo">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"
+          />
+        </filter>
+      </defs>
+    </svg>
+
+    <div class="wrap" id="island" data-state="idle" data-text="empty">
+      <!-- Capa 1: solo las siluetas negras. Es la única que lleva el filtro. -->
+      <div class="layer blobs">
+        <div class="bubble-shape"></div>
+        <div class="pill-shape"></div>
+      </div>
+
+      <!-- Capa 2: el contenido, nítido, con la misma geometría que la capa de siluetas. -->
+      <div class="layer content">
+        <div class="bubble-box">
+          <p class="preview" id="preview"></p>
+        </div>
+
+        <div class="pill-box">
+          <div class="art">
+            <svg class="mic" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="10.5" rx="3" fill="currentColor" />
+              <path
+                d="M5.5 11a6.5 6.5 0 0 0 13 0"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+              />
+              <path
+                d="M12 17.5V21"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+              />
+            </svg>
+            <svg class="pause" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="6.5" y="5" width="3.6" height="14" rx="1.8" fill="currentColor" />
+              <rect x="13.9" y="5" width="3.6" height="14" rx="1.8" fill="currentColor" />
+            </svg>
+            <svg class="check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4.5 12.5l5 5 10-11"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <div class="title" id="title">Escuchando</div>
+          <div class="bars" id="bars"></div>
+          <div class="timer" id="timer">0:00</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="island.js"></script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+**/*.rs.bk
+
+# Configuración local con la API key
+config.json
+
+# Windows
+Thumbs.db
+desktop.ini

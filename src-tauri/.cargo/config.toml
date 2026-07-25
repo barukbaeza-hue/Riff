@@ -1,0 +1,12 @@
+# Los artefactos de compilacion viven FUERA de OneDrive.
+#
+# Dos motivos, ambos comprobados en este equipo:
+#   1. OneDrive sincroniza los archivos mientras el compilador los escribe y le quita el
+#      acceso: `autocfg` falla con "output path is not a writable directory".
+#   2. target/ alcanza varios GB de artefactos temporales que no tiene ningun sentido
+#      subir a la nube.
+#
+# El codigo fuente sigue en OneDrive y conserva su respaldo automatico.
+
+[build]
+target-dir = "C:/Users/Hp/AppData/Local/riff-build"
