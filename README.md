@@ -7,6 +7,27 @@ comas, puntos, puntos suspensivos y los signos de apertura `¿` y `¡`.
 Gratis y sin límites prácticos: usa el plan gratuito de Groq, que da **8 horas de dictado al
 día sin coste y sin tarjeta**.
 
+<p align="center">
+  <img src="docs/transcribiendo.png" alt="Riff mostrando el texto transcrito mientras se habla" width="560">
+</p>
+
+Mientras hablas, el texto va apareciendo en una segunda burbuja que **emerge de la isla como
+una gota de líquido** y crece con lo que dices. Tu documento no se toca hasta que pulsas
+`Enter`.
+
+<p align="center">
+  <img src="docs/escuchando.png" alt="La isla escuchando, con el visualizador de voz" width="420">
+  <br>
+  <em>Escuchando: las barras siguen tu voz en tiempo real.</em>
+</p>
+
+<p align="center">
+  <img src="docs/pausa.png" alt="Riff en pausa, conservando el texto dictado" width="480">
+  <br>
+  <em>En pausa: el micrófono se detiene de verdad y el texto se conserva. Pulsa
+  <code>Alt+R</code> para seguir donde lo dejaste.</em>
+</p>
+
 ---
 
 ## Instalación
